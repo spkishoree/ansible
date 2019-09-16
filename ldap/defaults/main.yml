@@ -1,0 +1,16 @@
+---
+
+ openldap_server_domain_name: net.lab
+
+ 
+ openldap_server_rootpw: Dec@12345678888888889
+
+ openldap_server_country: US
+ openldap_server_state: oregon
+ openldap_server_location: portland
+ openldap_server_organization: IT
+
+ openldap_server_enable_ssl: true
+
+
+ sopenldap_server_ldif: domain.ldif

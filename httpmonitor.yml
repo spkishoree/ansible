@@ -1,0 +1,13 @@
+---
+- hosts: [lb]
+  tasks: 
+   - name: Create HTTP Monitor
+     bigip_monitor_http:
+       state: present
+       ip: '*'
+       name: my_http_monitor
+       provider:
+         server: 172.22.110.224
+         user: admin
+         password: default
+     delegate_to: localhost

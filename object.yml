@@ -1,0 +1,29 @@
+---
+-  hosts: asa
+   connection: local
+   gather_facts: no
+
+
+   tasks: 
+     - name: Create object network
+       cisco_asa_network_object:
+         host={{ host }}
+         username=user
+         password=pass123
+         name=NET--4
+         state=present
+         category=ipv4_subnet
+         description='Sales network'
+         value='10.12.30.0/24'
+         validate_certs=no
+
+     - name: Create object for service server
+       cisco_asa_service_object:
+         host={{ host }}
+         username=user1
+         passwordpass123
+         name=srv-obj
+         state=present
+         category=ipv4_address
+         value='10.12.40.12'
+         validate_certs=no

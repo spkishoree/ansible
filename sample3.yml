@@ -1,0 +1,12 @@
+- hosts: CloudUnix
+  sudo: yes
+  tasks:
+      - name: Create user
+        user:
+            name: kishore
+            shell: /bin/bash
+
+      - name: Install vim
+        yum:
+            name: vim
+            state: latest

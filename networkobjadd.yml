@@ -1,0 +1,13 @@
+---
+-  hosts: asa
+   connection: local
+   gather_facts: no
+   tasks: 
+     - name: add network object
+       cisco_asa_network_objectgroup:
+         host={{ host }}
+         username=user
+         password=pass123
+         name=netadd
+         state=present
+         validate_certs=yes

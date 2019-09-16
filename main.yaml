@@ -1,0 +1,24 @@
+- hosts: CloudUnix
+  vars_files:
+      - mainvar.yml
+  sudo: yes
+  tasks:
+      - name: Create user
+        user:
+            name: "{{name}}"
+            shell: "{{shell}}"
+
+      - name: Install vim
+        yum:
+            name: vim
+            state: latest
+            
+        notify:
+            - restart Dockers
+        
+  handlers:
+    - name: restart Dockers
+      service:
+        name: dockers
+        state: restarted
+ 

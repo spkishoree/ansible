@@ -1,0 +1,11 @@
+---
+
+- hosts: unix
+  sudo: yes
+  connection: local
+  tasks:
+    - command: groupadd dev2
+    - command: groupadd ops2
+    - command: mkdir /home/spk2
+    - command: chgrp dev /home/spk2
+

@@ -1,0 +1,8 @@
+---
+
+handlers:
+    - name: restart Dockers
+      service:
+        name: dockers
+        state: restarted
+

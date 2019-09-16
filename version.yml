@@ -1,0 +1,25 @@
+---
+- name: ASA task
+  hosts: asa
+  connection: local
+  
+  vars:
+      provider:
+        authorize: yes
+        host: "172.22.110.196"
+        username: "cisco"
+        password: "cisco123"
+        auth_pass: "cisco123"
+  
+  tasks:
+    - name: running commands
+      asa_command:
+        provider: "{{ provider }}" 
+        commands:
+          - show version
+          - 
+      register: version    
+   
+      debug:
+          - msg: version is {{ version }}
+    

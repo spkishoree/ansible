@@ -1,0 +1,243 @@
+Create HTTP Monitor:
+
+
+[sujpadhi@nislab-f5v-rp01:Active:In Sync] ~ # tmsh list ltm monitor http itsm_http_m
+ltm monitor http itsm_http_m {
+    adaptive disabled
+    defaults-from http
+    destination *:*
+    interval 5
+    ip-dscp 0
+    recv welcome
+    recv-disable none
+    send "GET / HTTP/1.1\r\nHost:\r\nConnection:Close\r\n\r\n"
+    time-until-up 0
+    timeout 16
+}
+
+
+[sujpadhi@nislab-f5v-rp01:Active:In Sync] ~ # tmsh create ltm monitor http itsm_http_m send "GET / HTTP/1.1\r\nHost:\r\nConnection:Close\r\n\r\n" recv "welcome"
+01020066:3: The requested monitor (/Common/itsm_http_m) already exists in partition Common.
+[sujpadhi@nislab-f5v-rp01:Active:In Sync] ~ #
+
+Create Node:
+
+[sujpadhi@nislab-f5v-rp01:Active:In Sync] ~ # tmsh create ltm node  nisLabw1 address 10.60.123.212
+[sujpadhi@nislab-f5v-rp01:Active:Changes Pending] ~ # tmsh list ltm node nisLabw1
+ltm node nisLabw1 {
+    address 10.60.123.212
+    session monitor-enabled
+    state down
+}
+[sujpadhi@nislab-f5v-rp01:Active:In Sync] ~ #
+
+
+Crate Pool:
+
+[sujpadhi@nislab-f5v-rp01:Active:In Sync] ~ # tmsh create ltm pool ITSM_Pool_HTTP members add { nislabw1:80 } members add { nislabl1:80 } load-balancing-mode least-connections-member monitor itsm_http_m
+[sujpadhi@nislab-f5v-rp01:Active:Not All Devices Synced] ~ # tmsh list ltm pool ITSM_Pool_HTTP
+ltm pool ITSM_Pool_HTTP {
+    load-balancing-mode least-connections-member
+    members {
+        nislabl1:http {
+            address 10.60.123.211
+            session monitor-enabled
+            state checking
+        }
+        nislabw1:http {
+            address 10.60.123.210
+            session monitor-enabled
+            state up
+        }
+    }
+    monitor itsm_http_m
+}
+[sujpadhi@nislab-f5v-rp01:Active:In Sync] ~ #
+
+
+?	Create Virtual Server.
+?	Create iRule.
+
+
+
+Create Virtual Server:
+
+[sujpadhi@nislab-f5v-rp01:Active:In Sync] ~ # tmsh create ltm virtual ITSM_HTTP_VIP destination 172.16.129.198:80 profiles add { tcp } profiles add { http } persist replace-all-with { source_addr } source-address-translation { type automap } pool ITSM_Pool_HTTP
+[sujpadhi@nislab-f5v-rp01:Active:Not All Devices Synced] ~ # tmsh list ltm virtual ITSM_HTTP_VIP
+ltm virtual ITSM_HTTP_VIP {
+    destination 172.16.129.198:http
+    ip-protocol tcp
+    mask 255.255.255.255
+    persist {
+        source_addr {
+            default yes
+        }
+    }
+    pool ITSM_Pool_HTTP
+    profiles {
+        http { }
+        tcp { }
+    }
+    source 0.0.0.0/0
+    source-address-translation {
+        type automap
+    }
+    translate-address enabled
+    translate-port enabled
+    vs-index 35
+}
+[sujpadhi@nislab-f5v-rp01:Active:In Sync] ~ #
+
+Create iRule:
+
+
+[sujpadhi@nislab-f5v-rp01:Active:In Sync] ~ # tmsh create ltm rule itsm_logging_rule when HTTP_REQUEST { log local0. "Client IP address [IP::client_addr]" }
+[sujpadhi@nislab-f5v-rp01:Active:Not All Devices Synced] ~ # tmsh list ltm rule itsm_logging_rule
+ltm rule itsm_logging_rule {
+    when HTTP_REQUEST { log local0. "Client IP address [IP::client_addr]" }
+}
+[sujpadhi@nislab-f5v-rp01:Active:In Sync] ~ #
+
+
+Create Virtual Servers with default configuration of profiles:
+
+[sujpadhi@nislab-f5v-rp01:Active:In Sync] ~ # tmsh create ltm virtual ITSM_HTTP_VIP destination 172.16.129.198:80 profiles add { tcp } profiles add { http } persist replace-all-with { source_addr } source-address-translation { type automap } pool ITSM_Pool_HTTP
+01020066:3: The requested Virtual Server (/Common/ITSM_HTTP_VIP) already exists in partition Common.
+[sujpadhi@nislab-f5v-rp01:Active:In Sync] ~ # tmsh list ltm virtual ITSM_HTTP_VIP
+ltm virtual ITSM_HTTP_VIP {
+    destination 172.16.129.198:http
+    ip-protocol tcp
+    mask 255.255.255.255
+    persist {
+        source_addr {
+            default yes
+        }
+    }
+    pool ITSM_Pool_HTTP
+    profiles {
+        http { }
+        tcp { }
+    }
+    source 0.0.0.0/0
+    source-address-translation {
+        type automap
+    }
+    translate-address enabled
+    translate-port enabled
+    vs-index 35
+}
+[sujpadhi@nislab-f5v-rp01:Active:In Sync] ~ #
+
+Creatr clientssl profile:
+
+[sujpadhi@nislab-f5v-rp01:Active:In Sync] ~ #  tmsh create ltm profile client-ssl ITSM_Clientssl cert 	itsm.capgemini.com.crt key itsm.capgemini.com.key
+010717e3:3: Client SSL profile must have RSA certificate/key pair.
+[sujpadhi@nislab-f5v-rp01:Active:In Sync] ~ #  tmsh list ltm profile client-ssl ITSM_Clientssl
+01020036:3: The requested ClientSSL Profile (/Common/ITSM_Clientssl) was not found.
+[sujpadhi@nislab-f5v-rp01:Active:In Sync] ~ #
+
+
+Create serverssl profile:
+
+
+[sujpadhi@nislab-f5v-rp01:Active:In Sync] ~ # tmsh create ltm profile server-ssl test defaults-from serverssl-insecure-compatible
+[sujpadhi@nislab-f5v-rp01:Active:Changes Pending] ~ # tmsh list ltm profile server-ssl test
+ltm profile server-ssl test {
+    app-service none
+    defaults-from serverssl-insecure-compatible
+}
+[sujpadhi@nislab-f5v-rp01:Active:In Sync] ~ #
+
+
+Create custom profile for TCP, HTTP or persistence:
+
+[sujpadhi@nislab-f5v-rp01:Active:In Sync] ~ #  tmsh create ltm profile tcp ITSM_TCP idle-timeout 600
+[sujpadhi@nislab-f5v-rp01:Active:Changes Pending] ~ # tmsh list ltm profile tcp ITSM_TCP
+ltm profile tcp ITSM_TCP {
+    app-service none
+    idle-timeout 600
+}
+[sujpadhi@nislab-f5v-rp01:Active:In Sync] ~ #
+
+
+[sujpadhi@nislab-f5v-rp01:Active:In Sync] ~ #  tmsh create ltm persistence source-addr ITSM_src_addr mask 255.255.255.255 timeout 300
+[sujpadhi@nislab-f5v-rp01:Active:Not All Devices Synced] ~ #  tmsh list ltm persistence source-addr ITSM_src_addr
+ltm persistence source-addr ITSM_src_addr {
+    app-service none
+    mask 255.255.255.255
+    timeout 300
+}
+[sujpadhi@nislab-f5v-rp01:Active:In Sync] ~ #
+
+
+[sujpadhi@nislab-f5v-rp01:Active:In Sync] ~ #  tmsh create ltm persistence cookie ITSM_cookie method insert
+[sujpadhi@nislab-f5v-rp01:Active:Not All Devices Synced] ~ # tmsh list ltm persistence cookie ITSM_cookie
+ltm persistence cookie ITSM_cookie {
+    app-service none
+    method insert
+}
+[sujpadhi@nislab-f5v-rp01:Active:In Sync] ~ #
+
+
+
+[sujpadhi@nislab-f5v-rp01:Active:In Sync] ~ # tmsh create ltm profile http itsm_http insert-xforwarded-for enabled
+[sujpadhi@nislab-f5v-rp01:Active:Changes Pending] ~ # tmsh list ltm profile http itsm_http
+ltm profile http itsm_http {
+    app-service none
+    insert-xforwarded-for enabled
+}
+[sujpadhi@nislab-f5v-rp01:Active:In Sync] ~ #
+
+
+[sujpadhi@nislab-f5v-rp01:Active:In Sync] ~ # tmsh create ltm persistence cookie test cookie-name test method insert cookie-encryption-passphrase Crypto@123
+01070293:3: The profile name (/Common/test) is already assigned to another profile.
+[sujpadhi@nislab-f5v-rp01:Active:In Sync] ~ #  tmsh create ltm profile http itsm_http
+01020066:3: The requested HTTP Profile (/Common/itsm_http) already exists in partition Common.
+[sujpadhi@nislab-f5v-rp01:Active:In Sync] ~ #
+
+
+
+Create HTTPS virtual server with custom profile and iRule:
+
+
+[sujpadhi@nislab-f5v-rp01:Active:In Sync] ~ # tmsh create ltm virtual ITSM_HTTPS_VIP destination 172.16.129.198:443 profiles add { itsm_http } profiles add { ITSM_Clientssl } profiles add { ITSM_TCP } persist replace-all-with { ITSM_cookie } source-address-translation { type automap } rules { itsm_logging_rule } pool  ITSM_Pool_HTTP
+01020036:3: The requested profile (/Common/ITSM_Clientssl) was not found.
+[sujpadhi@nislab-f5v-rp01:Active:In Sync] ~ # tmsh list ltm virtual ITSM_HTTPS_VIP
+01020036:3: The requested Virtual Server (/Common/ITSM_HTTPS_VIP) was not found.
+[sujpadhi@nislab-f5v-rp01:Active:In Sync] ~ #
+
+
+Create HTTP virtual server with HTTP to HTTP redirect iRule:
+
+
+[sujpadhi@nislab-f5v-rp01:Active:In Sync] ~ # tmsh create ltm virtual test_http1 destination 192.168.40.100:80 profiles add { http } rules  { _sys_https_redirect }
+[sujpadhi@nislab-f5v-rp01:Active:Not All Devices Synced] ~ # tmsh list ltm virtual test_http1
+ltm virtual test_http1 {
+    destination 192.168.40.100:http
+    ip-protocol tcp
+    mask 255.255.255.255
+    profiles {
+        http { }
+        tcp { }
+    }
+    rules {
+        _sys_https_redirect
+    }
+    source 0.0.0.0/0
+    translate-address enabled
+    translate-port enabled
+    vs-index 37
+}
+[sujpadhi@nislab-f5v-rp01:Active:In Sync] ~ #
+
+
+
+
+
+
+
+
+
+
+
+

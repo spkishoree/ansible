@@ -1,0 +1,4 @@
+---
+- import_tasks: install_ldap.yml
+- import_tasks: configure_ldap.yml
+- import_tasks: add_entries.yml

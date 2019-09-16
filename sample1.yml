@@ -1,0 +1,6 @@
+---
+
+- hosts: CloudUnix
+  name: Ping
+  tasks:
+   - ping:

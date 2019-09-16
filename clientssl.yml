@@ -1,0 +1,16 @@
+---
+- hosts:[lb]
+  tasks:
+    - name: Create a client SSL profile with a cert/key
+      bigip_profile_client_ssl:
+        state: present
+        name: my_profile
+        cert_key_chain:
+          - cert: itsm.capgemini.com.crt
+            key: itsm.capgemini.com.key
+            chain: itsm.capgemini.com.chain
+        provider:
+            server: 172.22.110.204
+            user: admin
+            password: default
+      delegate_to: localhost

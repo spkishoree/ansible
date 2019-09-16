@@ -1,0 +1,20 @@
+---
+- hosts: unix
+  sudo: yes
+  connection: local
+  tasks:
+   - apt:
+       name: samba
+       state: present
+   - template:
+       src: '/etc/samba/smb.conf2'
+       dest: '/etc/samba/smb.conf2'
+       owner: 'root'
+       group: 'root'
+     
+
+     notify:  Restart Samba service    
+
+  handlers:
+   - name: Restart Samba service
+     service: name=smb  state=restarted     
